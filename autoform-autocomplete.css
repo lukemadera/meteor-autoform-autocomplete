@@ -1,0 +1,23 @@
+.lm-autoform-autocomplete-input-cont {
+  position: relative;
+}
+.lm-autoform-autocomplete-predictions {
+  position: absolute;
+  z-index: 999;
+  width: 100%;
+  background-color: white;
+  color: rgb(75,75,75);
+  border-bottom: solid 1px rgb(200,200,200);
+  border-left: solid 1px rgb(200,200,200);
+  border-right: solid 1px rgb(200,200,200);
+  padding: 0 5px;
+  display: none;
+  box-sizing: border-box;
+}
+.lm-autoform-autocomplete-predictions.visible {
+  display: block;
+}
+
+.lm-autoform-autocomplete-prediction-item {
+  cursor: pointer;
+}
