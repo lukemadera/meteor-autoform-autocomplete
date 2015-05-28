@@ -21,3 +21,7 @@
 .lm-autoform-autocomplete-prediction-item {
   cursor: pointer;
 }
+
+.lm-autoform-autocomplete-selected-value {
+  cursor: pointer;
+}

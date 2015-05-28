@@ -1,9 +1,24 @@
 <template name="afAutocomplete">
   <div class='lm-autoform-autocomplete-input-cont'>
-    <!-- <input type="text" value="{{this.value.name}}" {{atts}} class='lm-autoform-autocomplete-input' /> -->
-    <div class='lm-autoform-autocomplete-input-multi-cont'>
-      <input type="text" value="{{this.value.name}}" {{atts}} class='lm-autoform-autocomplete-input' />
-    </div>
+
+    {{#if opts.multi}}
+      <div class='lm-autoform-autocomplete-input-multi-cont'>
+        {{#each values}}
+          <span class='lm-autoform-autocomplete-selected-value'>
+            <span class='lm-autoform-autocomplete-selected-value-remove'>x</span>
+            {{#if xDisplay.name}}
+              {{xDisplay.name}}
+            {{else}}
+              {{name}}
+            {{/if}}
+          </span>
+        {{/each}}
+        <input type="text" {{atts}} class='lm-autoform-autocomplete-input' />
+      </div>
+    {{else}}
+      <input type="text" {{atts}} class='lm-autoform-autocomplete-input' />
+    {{/if}}
+    
     <div class='lm-autoform-autocomplete-predictions {{classes.predictions}}'>
       {{#each predictions}}
         <div class='lm-autoform-autocomplete-prediction-item'>

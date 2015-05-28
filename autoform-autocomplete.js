@@ -10,11 +10,11 @@
       @param {Array} predictions Array of objects with the predictions. Each object should have:
         @param {String} value
         @param {String} name
-  @param {Function} [updateVal] A function to call every time a value is selected. It is passed:
-    @param {String} instid The same atts.opts.instid that was passed in (to uniquely identify)
-    @param {Object} val
+  @param {Function} [onUpdateVals] A function to call every time value(s) are updated (set, added, removed). It is passed either an array of objects (if multi) or just one object.
+    @param {String} optsInstid The same atts.opts.instid that was passed in (to uniquely identify)
+    @param {Object|Array} vals Array if multi is set, object otherwise of:
       @param {String} value
-      @param {String} name
+      @param {String} name Set if multi
 
 API:
 lmAfAutocomplete.updateVal
@@ -22,8 +22,12 @@ lmAfAutocomplete.updateVal
 
 @toc
 lmAfAutocomplete.
-  3. updateVal
+  3. setVals
+  15. removeVals
+  16. addVals
+  18. removeAllVals
 lmAfAutocompletePrivate.
+  17. onUpdateVals
   12. getTemplateInst
   1. init
   13. destroy
@@ -42,8 +46,6 @@ Template.afAutocomplete.
 
 lmAfAutocomplete ={};
 
-var VAL ={};    //one per instid
-
 var lmAfAutocompletePrivate ={};
 
 /**
@@ -52,11 +54,13 @@ var lmAfAutocompletePrivate ={};
   lmAfAutocompletePrivate.inst ={
     'inst1': {
       templateInst: templateInst1,
+      optsInstid: '',
       values: [{value: 'val1', name:'name1'}],
       multi: 0
     },
     'inst2': {
       templateInst: templateInst2,
+      optsInstid: 'asfdlkjl3lajkf',
       values: [{value: 'val2', name:'name2'}],
       multi: 1
     }
@@ -66,44 +70,157 @@ lmAfAutocompletePrivate.inst ={};
 
 /**
 @toc 3.
-@param {Object} val
-  @param {String} value
+@param {Array|Object} vals Array of objects (or one single object) to set, each object has:
+  @param {String} [value] If not set, will be assumed it is a NEW value to add
   @param {String} name The display text
 @param {Object} params
-  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'instid' is required
-  @param {Object} [instid] The opts.instid passed in with the template options (for external use)
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
-lmAfAutocomplete.updateVal =function(val, params) {
-  console.log('updateVal: ', val);
+lmAfAutocomplete.setVals =function(vals, params) {
+  console.log('setVals: ', vals);
+  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+    vals =[vals];
+  }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
   if(templateInst) {
     var instid =templateInst.data.atts['data-schema-key'];
-    var opts =templateInst.opts;
-    var val1 =VAL[instid];
-    if(val.value) {
-      val1.value =val.value;
-    }
-    else {
-      val1.value =opts.newNamePrefix+val.name;
-    }
-    val1.name =val.name;
 
-    //update UI too
-    var ele =templateInst.find('input.lm-autoform-autocomplete-input');
-    ele.value =val.name;
-
-    lmAfAutocompletePrivate.hide(templateInst, {});
-    VAL[instid] =val1;
-
-    if(templateInst.data.atts.opts.instid !==undefined && templateInst.data.atts.opts.updateVal !==undefined) {
-      templateInst.data.atts.opts.updateVal.call(templateInst, templateInst.data.atts.opts.instid, val1, {});
+    //if no multi, only set/add ONE
+    if(!lmAfAutocompletePrivate.inst[instid].multi) {
+      vals =vals.slice(0, 1);
     }
+
+    var opts =templateInst.opts.get();
+    var ii;
+    for(ii =0; ii<vals.length; ii++) {
+      if(vals[ii].value ===undefined || !vals[ii].value) {
+        vals[ii].value =opts.newNamePrefix+vals[ii].name;
+      }
+    }
+
+    lmAfAutocompletePrivate.onUpdateVals(instid, templateInst, vals, {});
+  }
+};
+
+/**
+@toc 15.
+@param {Array|Object} vals Array of objects (or one single object) to remove, each object has:
+  @param {String} value
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+  // @param {Boolean} [noOnUpdate] True to NOT run the on update (i.e. if just using this to remove all values befor ea set, do not want to call it twice)
+*/
+lmAfAutocomplete.removeVals =function(vals, params) {
+  console.log('removeVals: ', vals);
+  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+    vals =[vals];
+  }
+  var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
+  if(templateInst) {
+    var instid =templateInst.data.atts['data-schema-key'];
+    var curVals =lmAfAutocompletePrivate.inst[instid].values;
+    var ii, index1;
+    //have to go through from the END since removing elements and do not want to mess up indices
+    for(ii =(curVals.length-1); ii<=0; ii--) {
+      index1 =nrArray.findArrayIndex(vals, 'value', curVals[ii].value, {});
+      if(index1 >-1) {
+        curVals =nrArray.remove(curVals, index1);
+      }
+    }
+
+    // if(params.noOnUpdate ===undefined || !params.noOnUpdate) {
+      lmAfAutocompletePrivate.onUpdateVals(instid, templateInst, curVals, {});
+    // }
+  }
+};
+
+/**
+@toc 16.
+@param {Array|Object} vals Array of objects (or one single object) to add, each object has:
+  @param {String} value
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+*/
+lmAfAutocomplete.addVals =function(vals, params) {
+  console.log('addVals: ', vals);
+  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+    vals =[vals];
+  }
+  var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
+  if(templateInst) {
+    var instid =templateInst.data.atts['data-schema-key'];
+    
+    //if no multi, clear out first and only set/add ONE
+    if(!lmAfAutocompletePrivate.inst[instid].multi) {
+      lmAfAutocomplete.removeAllVals(params);
+      vals =vals.slice(0, 1);
+    }
+
+    var curVals =lmAfAutocompletePrivate.inst[instid].values;
+    var ii, index1;
+    for(ii =0; ii<vals.length; ii++) {
+      index1 =nrArray.findArrayIndex(curVals, 'value', vals[ii].value, {});
+      if(index1 <0) {
+        curVals.push(vals[ii]);
+      }
+    }
+
+    lmAfAutocompletePrivate.onUpdateVals(instid, templateInst, curVals, {});
+  }
+};
+
+/**
+@toc 18.
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+  // @param {Boolean} [noOnUpdate] True to NOT run the on update (i.e. if just using this to remove all values befor ea set, do not want to call it twice)
+*/
+lmAfAutocomplete.removeAllVals =function(params) {
+  var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
+  if(templateInst) {
+    var instid =templateInst.data.atts['data-schema-key'];
+    var curVals =[];
+    lmAfAutocompletePrivate.onUpdateVals(instid, templateInst, curVals, {});
   }
 };
 
 
+
+/**
+@toc 17.
+*/
+lmAfAutocompletePrivate.onUpdateVals =function(instid, templateInst, vals, params) {
+  //update UI too
+  var ele =templateInst.find('input.lm-autoform-autocomplete-input');
+  if(lmAfAutocompletePrivate.inst[instid].multi) {
+    ele.value ='';    //blank out
+  }
+  else if(vals.length) {
+    ele.value =vals[0].name;
+  }
+
+  lmAfAutocompletePrivate.inst[instid].values =vals;
+  templateInst.values.set(vals);
+  lmAfAutocompletePrivate.hide(templateInst, {});
+
+  if(vals.length && templateInst.data.atts.opts.instid !==undefined && templateInst.data.atts.opts.onUpdateVals !==undefined) {
+    var valToSend =vals;
+    if(!lmAfAutocompletePrivate.inst[instid].multi) {
+      valToSend =valToSend[0];
+    }
+    templateInst.data.atts.opts.onUpdateVals.call(templateInst, templateInst.data.atts.opts.instid, valToSend, {});
+  }
+};
+
 /**
 @toc 12.
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocompletePrivate.getTemplateInst =function(params) {
   var templateInst =false;
@@ -115,6 +232,15 @@ lmAfAutocompletePrivate.getTemplateInst =function(params) {
       templateInst =lmAfAutocompletePrivate.inst[params.instid].templateInst;
     }
   }
+  else if(params.optsInstid) {
+    var xx;
+    for(xx in lmAfAutocompletePrivate.inst) {
+      if(lmAfAutocompletePrivate.inst[xx].optsInstid ===params.optsInstid) {
+        templateInst =lmAfAutocompletePrivate.inst[xx].templateInst;
+        break;
+      }
+    }
+  }
   return templateInst;
 }
 
@@ -124,19 +250,15 @@ lmAfAutocompletePrivate.getTemplateInst =function(params) {
 lmAfAutocompletePrivate.init =function(templateInst, params) {
   this.initOpts(templateInst, params);
 
-  var val =templateInst.data.value;
-  if(typeof(val) ==='string') {
-    val ={
-      name: val
-    };
+  var vals =templateInst.data.value;
+  if(vals ===undefined || !vals) {
+    vals =[];
   }
-  var instid =templateInst.data.atts['data-schema-key'];
-  VAL[instid] =val;
+  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+    vals =[vals];
+  }
 
-  //has to be AFTER VAL[instid] is set
-  if(val.name && val.value) {
-    lmAfAutocomplete.updateVal(val, {templateInst:templateInst});
-  }
+  lmAfAutocomplete.setVals(vals, {templateInst:templateInst});
 };
 
 /**
@@ -174,30 +296,30 @@ lmAfAutocompletePrivate.initOpts =function(templateInst, params) {
       }
     }
   }
+  opts.multi =parseInt(opts.multi, 10);
 
-  //if already passed in, just use the SAME instid. Otherwise create a new one.
   if(opts.instid ===undefined) {
     console.log('lmAfAutocomplete: opts.instid not set (it is required if you want to use any (external) api calls)');
-    opts.instid ="lmAfAutocomplete"+(Math.random() + 1).toString(36).substring(7);
+    opts.instid =false;
   }
-  lmAfAutocompletePrivate.inst[opts.instid] ={
+  var instid =templateInst.data.atts['data-schema-key'];
+  lmAfAutocompletePrivate.inst[instid] ={
     templateInst: templateInst,
+    optsInstid: opts.instid,
     multi: opts.multi,
     values: []
   };
 
-  templateInst.opts =opts;
+  templateInst.opts.set(opts);
 };
 
 /**
 @toc 4.
 @param {Object} params
   @param {Boolean} [noShow] True to NOT display predictions
-  // @param {Boolean} [setVal] True to also set the value (i.e. for init)
 */
 lmAfAutocompletePrivate.getPredictions =function(templateInst, val, params) {
   var predictions =[];
-  // var retPredictions =templateInst.getPredictions(val, {});
   var retPredictions =templateInst.data.atts.opts.getPredictions.call(templateInst, val, {});
   predictions =retPredictions.predictions;
   //if none, show the val for allowing creation
@@ -211,6 +333,10 @@ lmAfAutocompletePrivate.getPredictions =function(templateInst, val, params) {
         }
       }
     ];
+  }
+  else {
+    //filter out already selected values
+    //@todo
   }
   templateInst.predictions.set(predictions);
   if(params.noShow ===undefined || !params.noShow) {
@@ -247,8 +373,12 @@ AutoForm.addInputType("lmautocomplete", {
   },
   valueOut: function() {
     var instid =this.attr('data-schema-key');
-    console.log('afAutocomplete valueOut: ', VAL[instid]);
-    return VAL[instid];
+    var valOut =lmAfAutocompletePrivate.inst[instid].values;
+    if(!lmAfAutocompletePrivate.inst[instid].multi) {
+      valOut =valOut[0];
+    }
+    console.log('afAutocomplete valueOut: ', valOut);
+    return valOut;
   }
 });
 
@@ -256,7 +386,7 @@ AutoForm.addInputType("lmautocomplete", {
 @toc 8.
 */
 Template.afAutocomplete.created =function() {
-  this.opts ={};
+  this.opts =new ReactiveVar({});
 
   this.predictions =new ReactiveVar([]);
   this.classes =new ReactiveVar({
@@ -302,6 +432,12 @@ Template.afAutocomplete.helpers({
   },
   predictions: function() {
     return Template.instance().predictions.get();
+  },
+  values: function() {
+    return Template.instance().values.get();
+  },
+  opts: function() {
+    return Template.instance().opts.get();
   }
 });
 
@@ -313,6 +449,9 @@ Template.afAutocomplete.events({
     lmAfAutocompletePrivate.getPredictions(template, evt.target.value, {});
   },
   'click .lm-autoform-autocomplete-prediction-item': function(evt, template) {
-    lmAfAutocomplete.updateVal(this, {templateInst:template});
+    lmAfAutocomplete.addVals([this], {templateInst:template});
+  },
+  'click .lm-autoform-autocomplete-selected-value': function(evt, template) {
+    lmAfAutocomplete.removeVals([this], {templateInst:template});
   }
 });
