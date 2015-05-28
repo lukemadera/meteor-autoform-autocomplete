@@ -26,28 +26,90 @@ meteor add lukemadera:autoform-autocomplete
 Specify "lmautocomplete" for the `type` attribute of any input and set the SimpleSchema to be an object:
 
 ```html
-{{> afQuickField name="tag" type="lmautocomplete" opts=optsAutocomplete getPredictions=getPredictions}}
+{{> afQuickField name="tag" type="lmautocomplete" opts=optsAutocomplete}}
 ```
 
 In the schema, which will then work with a `quickForm` or `afQuickFields`:
 
 @todo
 ```js
-AddressSchema =new SimpleSchema({
-  fullAddress: {
+TagsSchema =new SimpleSchema({
+  tags: {
+    type: [Object]
+  },
+  "tags.$._id": {
+    type: String
+  },
+  "tags.$.name": {
     type: String
   }
 });
 
 Template.autoformAutocompleteBasic.helpers({
-  optsGoogleplace: function() {
+  optsAutocomplete: function() {
     return {
-      // type: 'googleUI',
-      // stopTimeoutOnKeyup: false,
-      // googleOptions: {
-      //   componentRestrictions: { country:'us' }
-      // }
+      instid: 'alfkjeaf',
+      // newNamePrefix: '_',
+      // multi: 1,
+      getPredictions: function(name, params) {
+        var ret ={predictions:[]};
+        var query ={
+          name: {
+            $regex: '^'+name,
+            $options: 'i'
+          }
+        };
+        var predictions1 =TagsCollection.find(query, {fields: {_id:1, name:1}}).fetch();
+        ret.predictions =predictions1.map(function(obj) {
+          return {
+            value: obj._id,
+            name: obj.name
+          }
+        });
+        return ret;
+      },
+      // onUpdateVals: function(instid, val, params) {
+      //   console.log(instid, val);
+      // },
     }
   }
 });
 ```
+
+### API
+
+/**
+@param {Array|Object} vals Array of objects (or one single object) to set, each object has:
+  @param {String} [value] If not set, will be assumed it is a NEW value to add
+  @param {String} name The display text
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+*/
+lmAfAutocomplete.setVals(vals, {optsInstid:'alfkj3'});
+
+/**
+@param {Array|Object} vals Array of objects (or one single object) to remove, each object has:
+  @param {String} value
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+  // @param {Boolean} [noOnUpdate] True to NOT run the on update (i.e. if just using this to remove all values befor ea set, do not want to call it twice)
+*/
+lmAfAutocomplete.removeVals(vals, {optsInstid:'asflkje'});
+
+/**
+@param {Array|Object} vals Array of objects (or one single object) to add, each object has:
+  @param {String} value
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+*/
+lmAfAutocomplete.addVals(vals, {optsInstid:'alkefe'});
+
+/**
+@param {Object} params
+  @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
+  @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
+*/
+lmAfAutocomplete.removeAllVals({optsInstid:'aefeafe'});

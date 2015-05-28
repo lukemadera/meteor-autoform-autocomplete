@@ -16,8 +16,8 @@
       @param {String} value
       @param {String} name Set if multi
 
-API:
-lmAfAutocomplete.updateVal
+
+API is all the lmAfAutocomplete functions (see below)
 
 
 @toc
@@ -336,7 +336,15 @@ lmAfAutocompletePrivate.getPredictions =function(templateInst, val, params) {
   }
   else {
     //filter out already selected values
-    //@todo
+    var instid =templateInst.data.atts['data-schema-key'];
+    var curVals =lmAfAutocompletePrivate.inst[instid].values;
+    var ii, index1;
+    for(ii =(predictions.length-1); ii>=0; ii--) {
+      index1 =nrArray.findArrayIndex(curVals, 'value', predictions[ii].value, {});
+      if(index1 >-1) {
+        predictions =nrArray.remove(predictions, index1);
+      }
+    }
   }
   templateInst.predictions.set(predictions);
   if(params.noShow ===undefined || !params.noShow) {
@@ -377,7 +385,6 @@ AutoForm.addInputType("lmautocomplete", {
     if(!lmAfAutocompletePrivate.inst[instid].multi) {
       valOut =valOut[0];
     }
-    console.log('afAutocomplete valueOut: ', valOut);
     return valOut;
   }
 });
