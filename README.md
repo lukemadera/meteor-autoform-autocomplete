@@ -82,6 +82,7 @@ Template.autoformAutocompleteBasic.helpers({
 
 ### API
 
+```js
 /**
 @param {Array|Object} vals Array of objects (or one single object) to set, each object has:
   @param {String} [value] If not set, will be assumed it is a NEW value to add
@@ -117,3 +118,4 @@ lmAfAutocomplete.addVals(vals, {optsInstid:'alkefe'});
   @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocomplete.removeAllVals({optsInstid:'aefeafe'});
+```
