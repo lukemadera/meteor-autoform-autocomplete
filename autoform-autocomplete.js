@@ -2,6 +2,7 @@
 @param {Object} [atts.opts]
   @param {String} [instid] Required to use any external API calls
   @param {Number} [multi =0] Set to 1 to make a multi select rather than a normal select
+  @param {Boolean} [createNew =false] True to allow creating a new value (instead of "no results" being displayed, the entered value will be displayed and will be given a value of newNamePrefix+name for uniquely identifying and then (optionally) using to create / save this new value to the database for next time)
   @param {String} [newNamePrefix ='__'] The prefix that will be used for creating a new name (if no match)
   @param {Function} getPredictions The function to call to look up predictions for the autocomplete. It is passed:
     @param {String} name The text input by the user to look up / match to
@@ -28,6 +29,7 @@ lmAfAutocomplete.
   18. removeAllVals
 lmAfAutocompletePrivate.
   17. onUpdateVals
+  19. focusInput
   12. getTemplateInst
   1. init
   13. destroy
@@ -78,8 +80,7 @@ lmAfAutocompletePrivate.inst ={};
   @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocomplete.setVals =function(vals, params) {
-  console.log('setVals: ', vals);
-  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -113,8 +114,7 @@ lmAfAutocomplete.setVals =function(vals, params) {
   // @param {Boolean} [noOnUpdate] True to NOT run the on update (i.e. if just using this to remove all values befor ea set, do not want to call it twice)
 */
 lmAfAutocomplete.removeVals =function(vals, params) {
-  console.log('removeVals: ', vals);
-  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -123,10 +123,10 @@ lmAfAutocomplete.removeVals =function(vals, params) {
     var curVals =lmAfAutocompletePrivate.inst[instid].values;
     var ii, index1;
     //have to go through from the END since removing elements and do not want to mess up indices
-    for(ii =(curVals.length-1); ii<=0; ii--) {
-      index1 =nrArray.findArrayIndex(vals, 'value', curVals[ii].value, {});
+    for(ii =(curVals.length-1); ii>=0; ii--) {
+      index1 =notoriiArray.findArrayIndex(vals, 'value', curVals[ii].value, {});
       if(index1 >-1) {
-        curVals =nrArray.remove(curVals, index1);
+        curVals =notoriiArray.remove(curVals, ii);
       }
     }
 
@@ -145,8 +145,7 @@ lmAfAutocomplete.removeVals =function(vals, params) {
   @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocomplete.addVals =function(vals, params) {
-  console.log('addVals: ', vals);
-  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -162,7 +161,7 @@ lmAfAutocomplete.addVals =function(vals, params) {
     var curVals =lmAfAutocompletePrivate.inst[instid].values;
     var ii, index1;
     for(ii =0; ii<vals.length; ii++) {
-      index1 =nrArray.findArrayIndex(curVals, 'value', vals[ii].value, {});
+      index1 =notoriiArray.findArrayIndex(curVals, 'value', vals[ii].value, {});
       if(index1 <0) {
         curVals.push(vals[ii]);
       }
@@ -217,6 +216,14 @@ lmAfAutocompletePrivate.onUpdateVals =function(instid, templateInst, vals, param
 };
 
 /**
+@toc 19.
+*/
+lmAfAutocompletePrivate.focusInput =function(templateInst, params) {
+  var ele =templateInst.find('input.lm-autoform-autocomplete-input');
+  ele.focus();
+};
+
+/**
 @toc 12.
 @param {Object} params
   @param {Object} [templateInst] (for internal use) One of 'templateInst' or 'optsInstid' is required
@@ -254,7 +261,7 @@ lmAfAutocompletePrivate.init =function(templateInst, params) {
   if(vals ===undefined || !vals) {
     vals =[];
   }
-  if(typeof(vals) ==='object' && !nrArray.isArray(vals)) {
+  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
     vals =[vals];
   }
 
@@ -281,7 +288,8 @@ lmAfAutocompletePrivate.destroy =function(templateInst, params) {
 lmAfAutocompletePrivate.initOpts =function(templateInst, params) {
   var optsDefault ={
     newNamePrefix: '__',
-    multi: 0
+    multi: 0,
+    createNew: false
   };
   var xx, opts;
   opts =EJSON.clone(templateInst.data.atts.opts);
@@ -322,17 +330,19 @@ lmAfAutocompletePrivate.getPredictions =function(templateInst, val, params) {
   var predictions =[];
   var retPredictions =templateInst.data.atts.opts.getPredictions.call(templateInst, val, {});
   predictions =retPredictions.predictions;
-  //if none, show the val for allowing creation
   if(!predictions.length) {
-    predictions =[
-      {
-        name: val,
-        value: '',
-        xDisplay: {
-          name: '*'+val
+    //if none and allow create new, show the val for allowing creation
+    if(templateInst.data.atts.opts.createNew) {
+      predictions =[
+        {
+          name: val,
+          value: '',
+          xDisplay: {
+            name: '*'+val
+          }
         }
-      }
-    ];
+      ];
+    }
   }
   else {
     //filter out already selected values
@@ -340,9 +350,9 @@ lmAfAutocompletePrivate.getPredictions =function(templateInst, val, params) {
     var curVals =lmAfAutocompletePrivate.inst[instid].values;
     var ii, index1;
     for(ii =(predictions.length-1); ii>=0; ii--) {
-      index1 =nrArray.findArrayIndex(curVals, 'value', predictions[ii].value, {});
+      index1 =notoriiArray.findArrayIndex(curVals, 'value', predictions[ii].value, {});
       if(index1 >-1) {
-        predictions =nrArray.remove(predictions, index1);
+        predictions =notoriiArray.remove(predictions, ii);
       }
     }
   }
@@ -382,6 +392,7 @@ AutoForm.addInputType("lmautocomplete", {
   valueOut: function() {
     var instid =this.attr('data-schema-key');
     var valOut =lmAfAutocompletePrivate.inst[instid].values;
+    console.log('valOut: ', valOut);
     if(!lmAfAutocompletePrivate.inst[instid].multi) {
       valOut =valOut[0];
     }
@@ -457,8 +468,12 @@ Template.afAutocomplete.events({
   },
   'click .lm-autoform-autocomplete-prediction-item': function(evt, template) {
     lmAfAutocomplete.addVals([this], {templateInst:template});
+    lmAfAutocompletePrivate.focusInput(template, {});
   },
   'click .lm-autoform-autocomplete-selected-value': function(evt, template) {
     lmAfAutocomplete.removeVals([this], {templateInst:template});
+  },
+  'click .lm-autoform-autocomplete-input-multi-cont': function(evt, template) {
+    lmAfAutocompletePrivate.focusInput(template, {});
   }
 });

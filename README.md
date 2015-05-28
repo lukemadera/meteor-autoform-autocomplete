@@ -1,11 +1,15 @@
 # lukemadera:autoform-autocomplete
 
+Autocomplete, select, multi-select all in one!
+
 An add-on Meteor package for aldeed:autoform. Provides a single custom input type, "lmautocomplete", which renders an input that is given a predictions dropdown.
 
 
 ## Demo
 
-@todo
+[Demo](http://beteal.org/org-edit/values)
+
+[Source](https://github.com/lukemadera/beteal/tree/master/packages/autoform-tag)
 
 
 ## Dependencies
@@ -31,7 +35,6 @@ Specify "lmautocomplete" for the `type` attribute of any input and set the Simpl
 
 In the schema, which will then work with a `quickForm` or `afQuickFields`:
 
-@todo
 ```js
 TagsSchema =new SimpleSchema({
   tags: {
@@ -49,8 +52,9 @@ Template.autoformAutocompleteBasic.helpers({
   optsAutocomplete: function() {
     return {
       instid: 'alfkjeaf',
-      // newNamePrefix: '_',
       // multi: 1,
+      // createNew: true,
+      // newNamePrefix: '_',
       getPredictions: function(name, params) {
         var ret ={predictions:[]};
         var query ={

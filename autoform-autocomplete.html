@@ -4,14 +4,14 @@
     {{#if opts.multi}}
       <div class='lm-autoform-autocomplete-input-multi-cont'>
         {{#each values}}
-          <span class='lm-autoform-autocomplete-selected-value'>
-            <span class='lm-autoform-autocomplete-selected-value-remove'>x</span>
+          <div class='lm-autoform-autocomplete-selected-value'>
+            <!-- <div class='lm-autoform-autocomplete-selected-value-remove'>x</div> -->
             {{#if xDisplay.name}}
               {{xDisplay.name}}
             {{else}}
               {{name}}
             {{/if}}
-          </span>
+          </div>
         {{/each}}
         <input type="text" {{atts}} class='lm-autoform-autocomplete-input' />
       </div>
