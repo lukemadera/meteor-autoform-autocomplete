@@ -80,7 +80,7 @@ lmAfAutocompletePrivate.inst ={};
   @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocomplete.setVals =function(vals, params) {
-  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
+  if(typeof(vals) ==='object' && !(Object.prototype.toString.apply(vals) === "[object Array]")) {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -114,7 +114,7 @@ lmAfAutocomplete.setVals =function(vals, params) {
   // @param {Boolean} [noOnUpdate] True to NOT run the on update (i.e. if just using this to remove all values befor ea set, do not want to call it twice)
 */
 lmAfAutocomplete.removeVals =function(vals, params) {
-  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
+  if(typeof(vals) ==='object' && !(Object.prototype.toString.apply(vals) === "[object Array]")) {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -145,7 +145,7 @@ lmAfAutocomplete.removeVals =function(vals, params) {
   @param {Object} [optsInstid] The opts.instid passed in with the template options (for external use)
 */
 lmAfAutocomplete.addVals =function(vals, params) {
-  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
+  if(typeof(vals) ==='object' && !(Object.prototype.toString.apply(vals) === "[object Array]")) {
     vals =[vals];
   }
   var templateInst =lmAfAutocompletePrivate.getTemplateInst(params);
@@ -261,7 +261,7 @@ lmAfAutocompletePrivate.init =function(templateInst, params) {
   if(vals ===undefined || !vals) {
     vals =[];
   }
-  if(typeof(vals) ==='object' && !Object.prototype.toString.apply(vals) === "[object Array]") {
+  if(typeof(vals) ==='object' && !(Object.prototype.toString.apply(vals) === "[object Array]")) {
     vals =[vals];
   }
 
@@ -392,7 +392,6 @@ AutoForm.addInputType("lmautocomplete", {
   valueOut: function() {
     var instid =this.attr('data-schema-key');
     var valOut =lmAfAutocompletePrivate.inst[instid].values;
-    console.log('valOut: ', valOut);
     if(!lmAfAutocompletePrivate.inst[instid].multi) {
       valOut =valOut[0];
     }
