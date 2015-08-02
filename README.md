@@ -30,7 +30,7 @@ meteor add lukemadera:autoform-autocomplete
 Specify "lmautocomplete" for the `type` attribute of any input and set the SimpleSchema to be an object:
 
 ```html
-{{> afQuickField name="tag" type="lmautocomplete" opts=optsAutocomplete}}
+{{> afQuickField name="tags" type="lmautocomplete" opts=optsAutocomplete}}
 ```
 
 In the schema, which will then work with a `quickForm` or `afQuickFields`:
