@@ -1,6 +1,6 @@
 Package.describe({
   name: 'lukemadera:autoform-autocomplete',
-  version: '1.0.1',
+  version: '1.0.2',
   // Brief, one-line summary of the package.
   summary: 'Autoform autocomplete, select, multi-select (with create new option) all in one!',
   // URL to the Git repository containing the source code for this package.
@@ -17,7 +17,7 @@ Package.onUse(function(api) {
   api.use('blaze@2.0.0');
   api.use('aldeed:autoform@4.0.0 || 5.0.0');
   api.use('reactive-var@1.0.5');
-  api.use('less@1.0.14');
+  api.use('less@2.5.0');
   api.use('notorii:array@0.0.1');
 
   api.addFiles([
